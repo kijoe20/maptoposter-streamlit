@@ -10,10 +10,55 @@ from __future__ import annotations
 import contextlib
 import io
 from pathlib import Path
+import textwrap
 
 import streamlit as st
 
 import create_map_poster as poster
+
+
+RESOLUTION_PRESETS: dict[str, tuple[str, float, float]] = {
+    "Instagram Post": ("1080 x 1080", 3.6, 3.6),
+    "Mobile Wallpaper": ("1080 x 1920", 3.6, 6.4),
+    "HD Wallpaper": ("1920 x 1080", 6.4, 3.6),
+    "4K Wallpaper": ("3840 x 2160", 12.8, 7.2),
+    "A4 Print": ("2480 x 3508", 8.3, 11.7),
+}
+
+USAGE_GUIDE_TEMPLATE = textwrap.dedent(
+    """
+    Everything needed for normal poster generation is available on this page.
+
+    **1) Recommended starter setup**
+    - **Theme:** `terracotta` (balanced and readable)
+    - **Map radius:** `8000-12000` for most downtown-focused posters
+    - **Output format:** `png` while iterating, then `svg` or `pdf` for final print
+    - **Size:** `8.3 x 11.7` for A4 prints, or keep `12 x 16` for larger wall posters
+
+    **2) Radius by city scale**
+    - `4000-6000` -> small/dense cores (Venice, Amsterdam center)
+    - `8000-12000` -> medium cities (Paris, Barcelona)
+    - `15000-20000` -> large metros (Tokyo, Mumbai)
+
+    **3) Theme picker quick guide**
+    - **High contrast:** `noir`, `midnight_blue`
+    - **Waterfront/coastal:** `ocean`, `blueprint`, `sunset`
+    - **Historic/organic streets:** `terracotta`, `japanese_ink`, `warm_beige`
+    - **Bold modern style:** `contrast_zones`, `neon_cyberpunk`, `emerald`
+
+    **4) Multilingual labels (optional)**
+    - Fill **Display city** and **Display country** with native script names.
+    - Set **Google Font family** for non-Latin text (for example: `Noto Sans JP`, `Noto Sans KR`, `Cairo`).
+
+    **5) Resolution guide (300 DPI)**
+    - Use the sidebar **Size preset (300 DPI)** selector for quick setup.
+    - Choose **Custom** in the selector to manually set width and height.
+
+    | Target | Resolution (px) | Inches (Width x Height) |
+    |--------|------------------|--------------------------|
+    {resolution_rows}
+    """
+).strip()
 
 
 @st.cache_data(show_spinner=False)
@@ -38,6 +83,17 @@ def get_mime_type(output_format: str) -> str:
         "svg": "image/svg+xml",
         "pdf": "application/pdf",
     }.get(output_format, "application/octet-stream")
+
+
+def render_usage_guide() -> None:
+    """Show in-app usage recommendations so README is optional."""
+    resolution_rows = "\n".join(
+        f"| {target} | {resolution} | {width} x {height} |"
+        for target, (resolution, width, height) in RESOLUTION_PRESETS.items()
+    )
+
+    with st.expander("Usage guide: recommended settings and themes", expanded=True):
+        st.markdown(USAGE_GUIDE_TEMPLATE.format(resolution_rows=resolution_rows))
 
 
 def render_result() -> None:
@@ -172,22 +228,38 @@ def main() -> None:
             step=500,
         )
 
-        dim_col1, dim_col2 = st.columns(2)
-        with dim_col1:
-            width = st.number_input(
-                "Width (inches)",
-                min_value=2.0,
-                max_value=20.0,
-                value=12.0,
-                step=0.5,
-            )
-        with dim_col2:
-            height = st.number_input(
-                "Height (inches)",
-                min_value=2.0,
-                max_value=20.0,
-                value=16.0,
-                step=0.5,
+        size_preset = st.selectbox(
+            "Size preset (300 DPI)",
+            options=["Custom", *RESOLUTION_PRESETS.keys()],
+            index=0,
+            help="Pick a recommended format or keep Custom for manual dimensions.",
+        )
+
+        if size_preset == "Custom":
+            dim_col1, dim_col2 = st.columns(2)
+            with dim_col1:
+                width = st.number_input(
+                    "Width (inches)",
+                    min_value=2.0,
+                    max_value=20.0,
+                    value=12.0,
+                    step=0.5,
+                    key="custom_width",
+                )
+            with dim_col2:
+                height = st.number_input(
+                    "Height (inches)",
+                    min_value=2.0,
+                    max_value=20.0,
+                    value=16.0,
+                    step=0.5,
+                    key="custom_height",
+                )
+        else:
+            _, width, height = RESOLUTION_PRESETS[size_preset]
+            st.caption(
+                f"Using {size_preset}: {width} x {height} inches at 300 DPI. "
+                "Select Custom to set dimensions manually."
             )
 
         output_format = st.selectbox("Output format", options=["png", "svg", "pdf"], index=0)
@@ -201,14 +273,7 @@ def main() -> None:
 
         generate = st.button("Generate poster", type="primary", use_container_width=True)
 
-    st.markdown(
-        """
-        **Tips**
-        - Large radii can take longer and use more memory.
-        - Use PNG for a quick preview, SVG/PDF for scalable print output.
-        - Non-Latin labels work best with an explicit Google Font family.
-        """
-    )
+    render_usage_guide()
 
     if generate:
         logs_buffer = io.StringIO()
