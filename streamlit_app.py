@@ -25,6 +25,41 @@ RESOLUTION_PRESETS: dict[str, tuple[str, float, float]] = {
     "A4 Print": ("2480 x 3508", 8.3, 11.7),
 }
 
+USAGE_GUIDE_TEMPLATE = textwrap.dedent(
+    """
+    Everything needed for normal poster generation is available on this page.
+
+    **1) Recommended starter setup**
+    - **Theme:** `terracotta` (balanced and readable)
+    - **Map radius:** `8000-12000` for most downtown-focused posters
+    - **Output format:** `png` while iterating, then `svg` or `pdf` for final print
+    - **Size:** `8.3 x 11.7` for A4 prints, or keep `12 x 16` for larger wall posters
+
+    **2) Radius by city scale**
+    - `4000-6000` -> small/dense cores (Venice, Amsterdam center)
+    - `8000-12000` -> medium cities (Paris, Barcelona)
+    - `15000-20000` -> large metros (Tokyo, Mumbai)
+
+    **3) Theme picker quick guide**
+    - **High contrast:** `noir`, `midnight_blue`
+    - **Waterfront/coastal:** `ocean`, `blueprint`, `sunset`
+    - **Historic/organic streets:** `terracotta`, `japanese_ink`, `warm_beige`
+    - **Bold modern style:** `contrast_zones`, `neon_cyberpunk`, `emerald`
+
+    **4) Multilingual labels (optional)**
+    - Fill **Display city** and **Display country** with native script names.
+    - Set **Google Font family** for non-Latin text (for example: `Noto Sans JP`, `Noto Sans KR`, `Cairo`).
+
+    **5) Resolution guide (300 DPI)**
+    - Use the sidebar **Size preset (300 DPI)** selector for quick setup.
+    - Choose **Custom** in the selector to manually set width and height.
+
+    | Target | Resolution (px) | Inches (Width x Height) |
+    |--------|------------------|--------------------------|
+    {resolution_rows}
+    """
+).strip()
+
 
 @st.cache_data(show_spinner=False)
 def get_available_themes() -> list[str]:
@@ -58,42 +93,7 @@ def render_usage_guide() -> None:
     )
 
     with st.expander("Usage guide: recommended settings and themes", expanded=True):
-        st.markdown(
-            textwrap.dedent(
-                f"""
-                Everything needed for normal poster generation is available on this page.
-
-                **1) Recommended starter setup**
-                - **Theme:** `terracotta` (balanced and readable)
-                - **Map radius:** `8000-12000` for most downtown-focused posters
-                - **Output format:** `png` while iterating, then `svg` or `pdf` for final print
-                - **Size:** `8.3 x 11.7` for A4 prints, or keep `12 x 16` for larger wall posters
-
-                **2) Radius by city scale**
-                - `4000-6000` -> small/dense cores (Venice, Amsterdam center)
-                - `8000-12000` -> medium cities (Paris, Barcelona)
-                - `15000-20000` -> large metros (Tokyo, Mumbai)
-
-                **3) Theme picker quick guide**
-                - **High contrast:** `noir`, `midnight_blue`
-                - **Waterfront/coastal:** `ocean`, `blueprint`, `sunset`
-                - **Historic/organic streets:** `terracotta`, `japanese_ink`, `warm_beige`
-                - **Bold modern style:** `contrast_zones`, `neon_cyberpunk`, `emerald`
-
-                **4) Multilingual labels (optional)**
-                - Fill **Display city** and **Display country** with native script names.
-                - Set **Google Font family** for non-Latin text (for example: `Noto Sans JP`, `Noto Sans KR`, `Cairo`).
-
-                **5) Resolution guide (300 DPI)**
-                - Use the sidebar **Size preset (300 DPI)** selector for quick setup.
-                - Choose **Custom** in the selector to manually set width and height.
-
-                | Target | Resolution (px) | Inches (Width x Height) |
-                |--------|------------------|--------------------------|
-                {resolution_rows}
-                """
-            ).strip()
-        )
+        st.markdown(USAGE_GUIDE_TEMPLATE.format(resolution_rows=resolution_rows))
 
 
 def render_result() -> None:
