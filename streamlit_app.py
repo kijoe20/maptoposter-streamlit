@@ -157,7 +157,7 @@ def main() -> None:
             with st.spinner("Generating poster..."):
                 with contextlib.redirect_stdout(logs_buffer), contextlib.redirect_stderr(logs_buffer):
                     if use_custom_coordinates:
-                        point = (float(lat), float(lon))
+                        point = (lat, lon)
                     else:
                         point = poster.get_coordinates(city.strip(), country.strip())
 
