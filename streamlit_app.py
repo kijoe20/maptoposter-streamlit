@@ -17,6 +17,15 @@ import streamlit as st
 import create_map_poster as poster
 
 
+RESOLUTION_PRESETS: dict[str, tuple[str, float, float]] = {
+    "Instagram Post": ("1080 x 1080", 3.6, 3.6),
+    "Mobile Wallpaper": ("1080 x 1920", 3.6, 6.4),
+    "HD Wallpaper": ("1920 x 1080", 6.4, 3.6),
+    "4K Wallpaper": ("3840 x 2160", 12.8, 7.2),
+    "A4 Print": ("2480 x 3508", 8.3, 11.7),
+}
+
+
 @st.cache_data(show_spinner=False)
 def get_available_themes() -> list[str]:
     """Fetch and cache available theme names from disk."""
@@ -43,10 +52,15 @@ def get_mime_type(output_format: str) -> str:
 
 def render_usage_guide() -> None:
     """Show in-app usage recommendations so README is optional."""
+    resolution_rows = "\n".join(
+        f"| {target} | {resolution} | {width} x {height} |"
+        for target, (resolution, width, height) in RESOLUTION_PRESETS.items()
+    )
+
     with st.expander("Usage guide: recommended settings and themes", expanded=True):
         st.markdown(
             textwrap.dedent(
-                """
+                f"""
                 Everything needed for normal poster generation is available on this page.
 
                 **1) Recommended starter setup**
@@ -71,14 +85,12 @@ def render_usage_guide() -> None:
                 - Set **Google Font family** for non-Latin text (for example: `Noto Sans JP`, `Noto Sans KR`, `Cairo`).
 
                 **5) Resolution guide (300 DPI)**
+                - Use the sidebar **Size preset (300 DPI)** selector for quick setup.
+                - Choose **Custom** in the selector to manually set width and height.
 
                 | Target | Resolution (px) | Inches (Width x Height) |
                 |--------|------------------|--------------------------|
-                | Instagram Post | 1080 x 1080 | 3.6 x 3.6 |
-                | Mobile Wallpaper | 1080 x 1920 | 3.6 x 6.4 |
-                | HD Wallpaper | 1920 x 1080 | 6.4 x 3.6 |
-                | 4K Wallpaper | 3840 x 2160 | 12.8 x 7.2 |
-                | A4 Print | 2480 x 3508 | 8.3 x 11.7 |
+                {resolution_rows}
                 """
             ).strip()
         )
@@ -216,22 +228,38 @@ def main() -> None:
             step=500,
         )
 
-        dim_col1, dim_col2 = st.columns(2)
-        with dim_col1:
-            width = st.number_input(
-                "Width (inches)",
-                min_value=2.0,
-                max_value=20.0,
-                value=12.0,
-                step=0.5,
-            )
-        with dim_col2:
-            height = st.number_input(
-                "Height (inches)",
-                min_value=2.0,
-                max_value=20.0,
-                value=16.0,
-                step=0.5,
+        size_preset = st.selectbox(
+            "Size preset (300 DPI)",
+            options=["Custom", *RESOLUTION_PRESETS.keys()],
+            index=0,
+            help="Pick a recommended format or keep Custom for manual dimensions.",
+        )
+
+        if size_preset == "Custom":
+            dim_col1, dim_col2 = st.columns(2)
+            with dim_col1:
+                width = st.number_input(
+                    "Width (inches)",
+                    min_value=2.0,
+                    max_value=20.0,
+                    value=12.0,
+                    step=0.5,
+                    key="custom_width",
+                )
+            with dim_col2:
+                height = st.number_input(
+                    "Height (inches)",
+                    min_value=2.0,
+                    max_value=20.0,
+                    value=16.0,
+                    step=0.5,
+                    key="custom_height",
+                )
+        else:
+            _, width, height = RESOLUTION_PRESETS[size_preset]
+            st.caption(
+                f"Using {size_preset}: {width} x {height} inches at 300 DPI. "
+                "Select Custom to set dimensions manually."
             )
 
         output_format = st.selectbox("Output format", options=["png", "svg", "pdf"], index=0)
