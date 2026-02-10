@@ -67,6 +67,16 @@ def render_usage_guide() -> None:
             **4) Multilingual labels (optional)**
             - Fill **Display city** and **Display country** with native script names.
             - Set **Google Font family** for non-Latin text (for example: `Noto Sans JP`, `Noto Sans KR`, `Cairo`).
+
+            **5) Resolution guide (300 DPI)**
+
+            | Target | Resolution (px) | Inches (Width x Height) |
+            |--------|------------------|--------------------------|
+            | Instagram Post | 1080 x 1080 | 3.6 x 3.6 |
+            | Mobile Wallpaper | 1080 x 1920 | 3.6 x 6.4 |
+            | HD Wallpaper | 1920 x 1080 | 6.4 x 3.6 |
+            | 4K Wallpaper | 3840 x 2160 | 12.8 x 7.2 |
+            | A4 Print | 2480 x 3508 | 8.3 x 11.7 |
             """
         )
 
