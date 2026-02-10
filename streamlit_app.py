@@ -10,6 +10,7 @@ from __future__ import annotations
 import contextlib
 import io
 from pathlib import Path
+import textwrap
 
 import streamlit as st
 
@@ -44,40 +45,42 @@ def render_usage_guide() -> None:
     """Show in-app usage recommendations so README is optional."""
     with st.expander("Usage guide: recommended settings and themes", expanded=True):
         st.markdown(
-            """
-            Everything needed for normal poster generation is available on this page.
+            textwrap.dedent(
+                """
+                Everything needed for normal poster generation is available on this page.
 
-            **1) Recommended starter setup**
-            - **Theme:** `terracotta` (balanced and readable)
-            - **Map radius:** `8000-12000` for most downtown-focused posters
-            - **Output format:** `png` while iterating, then `svg` or `pdf` for final print
-            - **Size:** `8.3 x 11.7` for A4 prints, or keep `12 x 16` for larger wall posters
+                **1) Recommended starter setup**
+                - **Theme:** `terracotta` (balanced and readable)
+                - **Map radius:** `8000-12000` for most downtown-focused posters
+                - **Output format:** `png` while iterating, then `svg` or `pdf` for final print
+                - **Size:** `8.3 x 11.7` for A4 prints, or keep `12 x 16` for larger wall posters
 
-            **2) Radius by city scale**
-            - `4000-6000` -> small/dense cores (Venice, Amsterdam center)
-            - `8000-12000` -> medium cities (Paris, Barcelona)
-            - `15000-20000` -> large metros (Tokyo, Mumbai)
+                **2) Radius by city scale**
+                - `4000-6000` -> small/dense cores (Venice, Amsterdam center)
+                - `8000-12000` -> medium cities (Paris, Barcelona)
+                - `15000-20000` -> large metros (Tokyo, Mumbai)
 
-            **3) Theme picker quick guide**
-            - **High contrast:** `noir`, `midnight_blue`
-            - **Waterfront/coastal:** `ocean`, `blueprint`, `sunset`
-            - **Historic/organic streets:** `terracotta`, `japanese_ink`, `warm_beige`
-            - **Bold modern style:** `contrast_zones`, `neon_cyberpunk`, `emerald`
+                **3) Theme picker quick guide**
+                - **High contrast:** `noir`, `midnight_blue`
+                - **Waterfront/coastal:** `ocean`, `blueprint`, `sunset`
+                - **Historic/organic streets:** `terracotta`, `japanese_ink`, `warm_beige`
+                - **Bold modern style:** `contrast_zones`, `neon_cyberpunk`, `emerald`
 
-            **4) Multilingual labels (optional)**
-            - Fill **Display city** and **Display country** with native script names.
-            - Set **Google Font family** for non-Latin text (for example: `Noto Sans JP`, `Noto Sans KR`, `Cairo`).
+                **4) Multilingual labels (optional)**
+                - Fill **Display city** and **Display country** with native script names.
+                - Set **Google Font family** for non-Latin text (for example: `Noto Sans JP`, `Noto Sans KR`, `Cairo`).
 
-            **5) Resolution guide (300 DPI)**
+                **5) Resolution guide (300 DPI)**
 
-            | Target | Resolution (px) | Inches (Width x Height) |
-            |--------|------------------|--------------------------|
-            | Instagram Post | 1080 x 1080 | 3.6 x 3.6 |
-            | Mobile Wallpaper | 1080 x 1920 | 3.6 x 6.4 |
-            | HD Wallpaper | 1920 x 1080 | 6.4 x 3.6 |
-            | 4K Wallpaper | 3840 x 2160 | 12.8 x 7.2 |
-            | A4 Print | 2480 x 3508 | 8.3 x 11.7 |
-            """
+                | Target | Resolution (px) | Inches (Width x Height) |
+                |--------|------------------|--------------------------|
+                | Instagram Post | 1080 x 1080 | 3.6 x 3.6 |
+                | Mobile Wallpaper | 1080 x 1920 | 3.6 x 6.4 |
+                | HD Wallpaper | 1920 x 1080 | 6.4 x 3.6 |
+                | 4K Wallpaper | 3840 x 2160 | 12.8 x 7.2 |
+                | A4 Print | 2480 x 3508 | 8.3 x 11.7 |
+                """
+            ).strip()
         )
 
 
