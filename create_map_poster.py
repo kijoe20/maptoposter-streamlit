@@ -252,11 +252,15 @@ def create_gradient_fade(ax, color, location="bottom", zorder=10):
     )
 
 
-def get_edge_colors_by_type(g):
+def get_edge_colors_by_type(g, theme: dict[str, str] | None = None):
     """
     Assigns colors to edges based on road type hierarchy.
     Returns a list of colors corresponding to each edge in the graph.
     """
+    active_theme = theme if theme is not None else THEME
+    if not active_theme:
+        raise ValueError("Theme is required. Pass a theme dict or initialize THEME.")
+
     edge_colors = []
 
     for _u, _v, data in g.edges(data=True):
@@ -269,17 +273,17 @@ def get_edge_colors_by_type(g):
 
         # Assign color based on road type
         if highway in ["motorway", "motorway_link"]:
-            color = THEME["road_motorway"]
+            color = active_theme["road_motorway"]
         elif highway in ["trunk", "trunk_link", "primary", "primary_link"]:
-            color = THEME["road_primary"]
+            color = active_theme["road_primary"]
         elif highway in ["secondary", "secondary_link"]:
-            color = THEME["road_secondary"]
+            color = active_theme["road_secondary"]
         elif highway in ["tertiary", "tertiary_link"]:
-            color = THEME["road_tertiary"]
+            color = active_theme["road_tertiary"]
         elif highway in ["residential", "living_street", "unclassified"]:
-            color = THEME["road_residential"]
+            color = active_theme["road_residential"]
         else:
-            color = THEME['road_default']
+            color = active_theme['road_default']
 
         edge_colors.append(color)
 
@@ -493,6 +497,7 @@ def create_poster(
     display_city=None,
     display_country=None,
     fonts=None,
+    theme: dict[str, str] | None = None,
 ):
     """
     Generate a complete map poster with roads, water, parks, and typography.
@@ -511,6 +516,7 @@ def create_poster(
         height: Poster height in inches (default: 16)
         country_label: Optional override for country text on poster
         _name_label: Optional override for city name (unused, reserved for future use)
+        theme: Theme dictionary used for rendering colors
 
     Raises:
         RuntimeError: If street network data cannot be retrieved
@@ -519,6 +525,9 @@ def create_poster(
     # Priority: display_city/display_country > name_label/country_label > city/country
     display_city = display_city or name_label or city
     display_country = display_country or country_label or country
+    active_theme = theme if theme is not None else THEME
+    if not active_theme:
+        raise ValueError("Theme is required. Pass a theme dict or initialize THEME.")
 
     print(f"\nGenerating map for {city}, {country}...")
 
@@ -561,8 +570,8 @@ def create_poster(
 
     # 2. Setup Plot
     print("Rendering map...")
-    fig, ax = plt.subplots(figsize=(width, height), facecolor=THEME["bg"])
-    ax.set_facecolor(THEME["bg"])
+    fig, ax = plt.subplots(figsize=(width, height), facecolor=active_theme["bg"])
+    ax.set_facecolor(active_theme["bg"])
     ax.set_position((0.0, 0.0, 1.0, 1.0))
 
     # Project graph to a metric CRS so distances and aspect are linear (meters)
@@ -579,7 +588,7 @@ def create_poster(
                 water_polys = ox.projection.project_gdf(water_polys)
             except Exception:
                 water_polys = water_polys.to_crs(g_proj.graph['crs'])
-            water_polys.plot(ax=ax, facecolor=THEME['water'], edgecolor='none', zorder=0.5)
+            water_polys.plot(ax=ax, facecolor=active_theme['water'], edgecolor='none', zorder=0.5)
 
     if parks is not None and not parks.empty:
         # Filter to only polygon/multipolygon geometries to avoid point features showing as dots
@@ -590,17 +599,17 @@ def create_poster(
                 parks_polys = ox.projection.project_gdf(parks_polys)
             except Exception:
                 parks_polys = parks_polys.to_crs(g_proj.graph['crs'])
-            parks_polys.plot(ax=ax, facecolor=THEME['parks'], edgecolor='none', zorder=0.8)
+            parks_polys.plot(ax=ax, facecolor=active_theme['parks'], edgecolor='none', zorder=0.8)
     # Layer 2: Roads with hierarchy coloring
     print("Applying road hierarchy colors...")
-    edge_colors = get_edge_colors_by_type(g_proj)
+    edge_colors = get_edge_colors_by_type(g_proj, active_theme)
     edge_widths = get_edge_widths_by_type(g_proj)
 
     # Determine cropping limits to maintain the poster aspect ratio
     crop_xlim, crop_ylim = get_crop_limits(g_proj, point, fig, compensated_dist)
     # Plot the projected graph and then apply the cropped limits
     ox.plot_graph(
-        g_proj, ax=ax, bgcolor=THEME['bg'],
+        g_proj, ax=ax, bgcolor=active_theme['bg'],
         node_size=0,
         edge_color=edge_colors,
         edge_linewidth=edge_widths,
@@ -612,8 +621,8 @@ def create_poster(
     ax.set_ylim(crop_ylim)
 
     # Layer 3: Gradients (Top and Bottom)
-    create_gradient_fade(ax, THEME['gradient_color'], location='bottom', zorder=10)
-    create_gradient_fade(ax, THEME['gradient_color'], location='top', zorder=10)
+    create_gradient_fade(ax, active_theme['gradient_color'], location='bottom', zorder=10)
+    create_gradient_fade(ax, active_theme['gradient_color'], location='top', zorder=10)
 
     # Calculate scale factor based on smaller dimension (reference 12 inches)
     # This ensures text scales properly for both portrait and landscape orientations
@@ -686,7 +695,7 @@ def create_poster(
         0.14,
         spaced_city,
         transform=ax.transAxes,
-        color=THEME["text"],
+        color=active_theme["text"],
         ha="center",
         fontproperties=font_main_adjusted,
         zorder=11,
@@ -697,7 +706,7 @@ def create_poster(
         0.10,
         display_country.upper(),
         transform=ax.transAxes,
-        color=THEME["text"],
+        color=active_theme["text"],
         ha="center",
         fontproperties=font_sub,
         zorder=11,
@@ -717,7 +726,7 @@ def create_poster(
         0.07,
         coords,
         transform=ax.transAxes,
-        color=THEME["text"],
+        color=active_theme["text"],
         alpha=0.7,
         ha="center",
         fontproperties=font_coords,
@@ -728,7 +737,7 @@ def create_poster(
         [0.4, 0.6],
         [0.125, 0.125],
         transform=ax.transAxes,
-        color=THEME["text"],
+        color=active_theme["text"],
         linewidth=1 * scale_factor,
         zorder=11,
     )
@@ -744,7 +753,7 @@ def create_poster(
         0.02,
         "© OpenStreetMap contributors",
         transform=ax.transAxes,
-        color=THEME["text"],
+        color=active_theme["text"],
         alpha=0.5,
         ha="right",
         va="bottom",
@@ -757,7 +766,7 @@ def create_poster(
 
     fmt = output_format.lower()
     save_kwargs = dict(
-        facecolor=THEME["bg"],
+        facecolor=active_theme["bg"],
         bbox_inches="tight",
         pad_inches=0.05,
     )
@@ -1022,7 +1031,7 @@ Examples:
             coords = get_coordinates(args.city, args.country)
 
         for theme_name in themes_to_generate:
-            THEME = load_theme(theme_name)
+            loaded_theme = load_theme(theme_name)
             output_file = generate_output_filename(args.city, theme_name, args.format)
             create_poster(
                 args.city,
@@ -1037,6 +1046,7 @@ Examples:
                 display_city=args.display_city,
                 display_country=args.display_country,
                 fonts=custom_fonts,
+                theme=loaded_theme,
             )
 
         print("\n" + "=" * 50)

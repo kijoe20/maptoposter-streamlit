@@ -61,12 +61,6 @@ python -m streamlit run streamlit_app.py
 
 ## Usage
 
-### Run Streamlit UI
-
-```bash
-python -m streamlit run streamlit_app.py
-```
-
 ### Generate Poster
 
 If you're using `uv`:

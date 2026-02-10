@@ -71,6 +71,70 @@ def render_result() -> None:
             st.code(logs)
 
 
+def _handle_generate_button(
+    city: str,
+    country: str,
+    use_custom_coordinates: bool,
+    lat: float | None,
+    lon: float | None,
+    theme_name: str,
+    distance: int,
+    width: float,
+    height: float,
+    output_format: str,
+    display_city: str,
+    display_country: str,
+    font_family: str,
+    logs_buffer: io.StringIO,
+) -> dict[str, object]:
+    """Generate a poster and return in-memory result payload."""
+    city = city.strip()
+    country = country.strip()
+    if not city or not country:
+        raise ValueError("City and country are required.")
+
+    with contextlib.redirect_stdout(logs_buffer), contextlib.redirect_stderr(logs_buffer):
+        if use_custom_coordinates:
+            if lat is None or lon is None:
+                raise ValueError("Latitude and longitude are required when custom coordinates are enabled.")
+            point = (lat, lon)
+        else:
+            point = poster.get_coordinates(city, country)
+
+        custom_fonts = None
+        if font_family.strip():
+            custom_fonts = poster.load_fonts(font_family.strip())
+
+        theme = poster.load_theme(theme_name)
+        output_file = poster.generate_output_filename(city, theme_name, output_format)
+        poster.create_poster(
+            city=city,
+            country=country,
+            point=point,
+            dist=distance,
+            output_file=output_file,
+            output_format=output_format,
+            width=width,
+            height=height,
+            display_city=display_city.strip() or None,
+            display_country=display_country.strip() or None,
+            fonts=custom_fonts,
+            theme=theme,
+        )
+
+    output_path = Path(output_file)
+    try:
+        output_bytes = output_path.read_bytes()
+    finally:
+        output_path.unlink(missing_ok=True)
+
+    return {
+        "path": output_path.name,
+        "bytes": output_bytes,
+        "format": output_format,
+    }
+
+
 def main() -> None:
     """Render Streamlit page and handle poster generation."""
     st.set_page_config(page_title="City Map Poster Generator", layout="wide")
@@ -147,48 +211,25 @@ def main() -> None:
     )
 
     if generate:
-        if not city.strip() or not country.strip():
-            st.error("City and country are required.")
-            st.stop()
-
         logs_buffer = io.StringIO()
-
         try:
             with st.spinner("Generating poster..."):
-                with contextlib.redirect_stdout(logs_buffer), contextlib.redirect_stderr(logs_buffer):
-                    if use_custom_coordinates:
-                        point = (lat, lon)
-                    else:
-                        point = poster.get_coordinates(city.strip(), country.strip())
-
-                    custom_fonts = None
-                    if font_family.strip():
-                        custom_fonts = poster.load_fonts(font_family.strip())
-
-                    poster.THEME = poster.load_theme(theme_name)
-                    output_file = poster.generate_output_filename(city.strip(), theme_name, output_format)
-                    poster.create_poster(
-                        city=city.strip(),
-                        country=country.strip(),
-                        point=point,
-                        dist=distance,
-                        output_file=output_file,
-                        output_format=output_format,
-                        width=width,
-                        height=height,
-                        display_city=display_city.strip() or None,
-                        display_country=display_country.strip() or None,
-                        fonts=custom_fonts,
-                    )
-
-                output_path = Path(output_file)
-                output_bytes = output_path.read_bytes()
-                output_path.unlink()  # Clean up the file immediately
-                st.session_state["latest_result"] = {
-                    "path": str(output_path),
-                    "bytes": output_bytes,
-                    "format": output_format,
-                }
+                st.session_state["latest_result"] = _handle_generate_button(
+                    city=city,
+                    country=country,
+                    use_custom_coordinates=use_custom_coordinates,
+                    lat=lat,
+                    lon=lon,
+                    theme_name=theme_name,
+                    distance=distance,
+                    width=width,
+                    height=height,
+                    output_format=output_format,
+                    display_city=display_city,
+                    display_country=display_country,
+                    font_family=font_family,
+                    logs_buffer=logs_buffer,
+                )
                 st.session_state["latest_logs"] = logs_buffer.getvalue()
         except Exception as exc:
             st.error(f"Generation failed: {exc}")
