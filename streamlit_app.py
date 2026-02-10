@@ -183,6 +183,7 @@ def main() -> None:
 
                 output_path = Path(output_file)
                 output_bytes = output_path.read_bytes()
+                output_path.unlink()  # Clean up the file immediately
                 st.session_state["latest_result"] = {
                     "path": str(output_path),
                     "bytes": output_bytes,
