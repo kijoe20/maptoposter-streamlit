@@ -43,6 +43,22 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+## Streamlit Web App (Optional)
+
+You can run an interactive web UI that uses the same rendering pipeline as the CLI.
+
+If you're using `uv`:
+
+```bash
+uv run streamlit run streamlit_app.py
+```
+
+If you're using pip + venv:
+
+```bash
+python -m streamlit run streamlit_app.py
+```
+
 ## Usage
 
 ### Generate Poster
@@ -260,6 +276,7 @@ Create a JSON file in `themes/` directory:
 ```text
 map_poster/
 ├── create_map_poster.py    # Main script
+├── streamlit_app.py        # Streamlit web interface
 ├── font_management.py      # Font loading and Google Fonts integration
 ├── themes/                 # Theme JSON files
 ├── fonts/                  # Font files
